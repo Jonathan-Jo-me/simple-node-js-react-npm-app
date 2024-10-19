@@ -2,36 +2,27 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'jonathan02/nodejs'
-        DOCKER_REGISTRY = 'jonathan02/simple-node-js-react-npm-app'  
+        IMAGE_NAME = 'jonathan02/node-js'
+        DOCKER_REGISTRY = 'jonathan02/simple-node-js-react-npm-app'
         IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clean Workspace') {
             steps {
-                // Ensure the repository is checked out
-                checkout scm
-            }
-        }
-
-        stage('Clean Node Modules') {
-            steps {
-                // Clean the node_modules directory
                 sh 'rm -rf node_modules'
             }
         }
 
-        stage('Build') { 
+        stage('Build') {
             steps {
-                // Install dependencies
-                sh 'npm install' 
+                sh 'npm install'
             }
         }
 
         stage('Test') {
             steps {
-                echo "Running tests..."
+                echo "Test Stage"
                 sh './jenkins/scripts/test.sh'
             }
         }
@@ -39,20 +30,20 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-credential', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    sh 'docker login -u ${USERNAME} -p ${PASSWORD}'
+                    sh 'echo ${PASSWORD} | docker login -u ${USERNAME} --password-stdin'
                 }
-                echo 'Successfully logged in to Docker Hub'
+                echo 'Login to Docker Hub successfully'
             }
         }
 
         stage('Build Docker Image') {
             steps {
+                // Ensure the Dockerfile is in the correct path
                 sh 'docker build -t ${IMAGE_TAG} .'
                 echo "Docker image built successfully"
                 sh "docker images"
             }
         }
-
 
         stage('Push Docker Image') {
             steps {
