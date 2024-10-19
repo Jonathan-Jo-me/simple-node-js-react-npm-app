@@ -1,17 +1,17 @@
 pipeline {
-    agent any
-    stages {
-        stage('Clean Workspace') {
-            steps {
-                // Remove the node_modules directory to avoid conflicts
-                sh 'rm -rf node_modules'
-            }
+    agent {
+        docker {
+            image 'node:lts-buster-slim'
+            args '-p 3000:3000'
         }
-
-        stage('Build') { 
+    }
+    environment {
+        CI = 'true'
+    }
+    stages {
+        stage('Build') {
             steps {
-                // Install dependencies
-                sh 'npm install' 
+                sh 'npm install'
             }
         }
         stage('Test') {
