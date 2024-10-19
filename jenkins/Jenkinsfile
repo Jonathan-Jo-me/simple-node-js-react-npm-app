@@ -7,6 +7,7 @@ pipeline {
     }
     environment {
         CI = 'true'
+        DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1291652946894782565/Z2DLNdFmdQfLJ2dUX5kBAgIGEdax7Gz-VWICJvHCcMHVXqC0hIlbwvWGMy8ICpfuUeNj' // Your webhook URL
     }
     stages {
         stage('Build') {
@@ -27,5 +28,29 @@ pipeline {
             }
         }
     }
+    post {
+        success {
+            script {
+                sendDiscordNotification("Build succeeded: ${env.BUILD_URL}")
+            }
+        }
+        failure {
+            script {
+                sendDiscordNotification("Build failed: ${env.BUILD_URL}")
+            }
+        }
+    }
 }
 
+def sendDiscordNotification(String message) {
+    def payload = [
+        content: message
+    ]
+
+    httpRequest(
+        url: DISCORD_WEBHOOK_URL,
+        httpMode: 'POST',
+        contentType: 'APPLICATION_JSON',
+        requestBody: groovy.json.JsonOutput.toJson(payload)
+    )
+}
