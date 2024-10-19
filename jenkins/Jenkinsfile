@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'jonathan02/node-js'
+        IMAGE_NAME = 'jonathan02/nodejs'
         DOCKER_REGISTRY = 'jonathan02/simple-node-js-react-npm-app'  
         IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
     }
@@ -47,12 +47,12 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Specify the path to the Dockerfile if it's not in the root directory
-                sh 'docker build -f ./path/to/Dockerfile -t ${IMAGE_TAG} .' // Update the path if needed
+                sh 'docker build -t ${IMAGE_TAG} .'
                 echo "Docker image built successfully"
                 sh "docker images"
             }
         }
+
 
         stage('Push Docker Image') {
             steps {
