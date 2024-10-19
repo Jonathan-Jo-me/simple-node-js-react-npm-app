@@ -6,21 +6,32 @@ pipeline {
         DOCKER_REGISTRY = 'jonathan02/simple-node-js-react-npm-app'  
         IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
     }
+
     stages {
+        stage('Checkout') {
+            steps {
+                // Ensure the repository is checked out
+                checkout scm
+            }
+        }
+
         stage('Clean Workspace') {
             steps {
-                sh 'rm -rf node_modules'
+                // Use Jenkins' built-in method to clean the workspace
+                cleanWs()
             }
         }
 
         stage('Build') { 
             steps {
+                // Install dependencies
                 sh 'npm install' 
             }
         }
+
         stage('Test') {
             steps {
-                echo "Test Stage"
+                echo "Running tests..."
                 sh './jenkins/scripts/test.sh'
             }
         }
@@ -30,12 +41,13 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-credential', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     sh 'docker login -u ${USERNAME} -p ${PASSWORD}'
                 }
-                echo 'Login to Docker Hub successfully'
+                echo 'Successfully logged in to Docker Hub'
             }
         }
 
         stage('Build Docker Image') {
             steps {
+                // Ensure Dockerfile is in the correct location
                 sh 'docker build -t ${IMAGE_TAG} .'
                 echo "Docker image built successfully"
                 sh "docker images"
