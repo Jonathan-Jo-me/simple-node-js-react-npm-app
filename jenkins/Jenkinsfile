@@ -1,17 +1,17 @@
 pipeline {
-    agent {
-        docker {
-            image 'node'
-            args '-p 3000:3000'
-        }
-    }
-    environment {
-        CI = 'true'
-    }
+    agent any
     stages {
-        stage('Build') {
+        stage('Clean Workspace') {
             steps {
-                sh 'npm install'
+                // Remove the node_modules directory to avoid conflicts
+                sh 'rm -rf node_modules'
+            }
+        }
+
+        stage('Build') { 
+            steps {
+                // Install dependencies
+                sh 'npm install' 
             }
         }
         stage('Test') {
