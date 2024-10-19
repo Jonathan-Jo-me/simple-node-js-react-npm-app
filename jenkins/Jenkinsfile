@@ -17,7 +17,7 @@ pipeline {
 
         stage('Clean Node Modules') {
             steps {
-                // Clean the node_modules directory instead of the entire workspace
+                // Clean the node_modules directory
                 sh 'rm -rf node_modules'
             }
         }
@@ -47,8 +47,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Ensure Dockerfile is in the correct location
-                sh 'docker build -t ${IMAGE_TAG} .'
+                // Specify the path to the Dockerfile if it's not in the root directory
+                sh 'docker build -f ./path/to/Dockerfile -t ${IMAGE_TAG} .' // Update the path if needed
                 echo "Docker image built successfully"
                 sh "docker images"
             }
