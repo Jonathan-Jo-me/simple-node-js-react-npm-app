@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'jonathan02/node-js'
-        DOCKER_REGISTRY = 'jonathan02/simple-node-js-react-npm-app'
-        IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
+        IMAGE_NAME = 'simple-node-js-react-npm-app'
+        DOCKER_REGISTRY = 'jonathan02'  // Your Docker Hub username
+        IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}" // This will generate a tag like jonathan02/simple-node-js-react-npm-app:1
     }
 
     stages {
@@ -14,9 +14,9 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build') { 
             steps {
-                sh 'npm install'
+                sh 'npm install' 
             }
         }
 
@@ -30,6 +30,7 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-credential', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    // Use --password-stdin for security
                     sh 'echo ${PASSWORD} | docker login -u ${USERNAME} --password-stdin'
                 }
                 echo 'Login to Docker Hub successfully'
@@ -38,7 +39,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Adjust the path to the Dockerfile
+                // Make sure to specify the correct Dockerfile path
                 sh 'docker build -t ${IMAGE_TAG} -f jenkins/Dockerfile .'
                 echo "Docker image built successfully"
                 sh "docker images"
