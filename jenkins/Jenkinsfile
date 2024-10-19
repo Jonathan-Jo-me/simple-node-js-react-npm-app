@@ -38,8 +38,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Ensure the Dockerfile is in the correct path
-                sh 'docker build -t ${IMAGE_TAG} .'
+                // Adjust the path to the Dockerfile
+                sh 'docker build -t ${IMAGE_TAG} -f jenkins/Dockerfile .'
                 echo "Docker image built successfully"
                 sh "docker images"
             }
