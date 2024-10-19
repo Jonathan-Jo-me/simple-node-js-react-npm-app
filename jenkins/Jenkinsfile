@@ -15,10 +15,10 @@ pipeline {
             }
         }
 
-        stage('Clean Workspace') {
+        stage('Clean Node Modules') {
             steps {
-                // Use Jenkins' built-in method to clean the workspace
-                cleanWs()
+                // Clean the node_modules directory instead of the entire workspace
+                sh 'rm -rf node_modules'
             }
         }
 
