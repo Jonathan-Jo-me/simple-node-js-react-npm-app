@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+
+    parameters {
+        extendedChoice(name: 'COMPONENTS', 
+                       type: 'PT_SINGLE_SELECT', 
+                       value: 'frontend,backend,database', 
+                       defaultValue: 'frontend', 
+                       multiSelectDelimiter: ',')
+    }
+
+    stages {
+        stage('Echo Selected Components') {
+            steps {
+                script {
+                    // Split the selected components by comma
+                    def selectedComponents = params.COMPONENTS.split(',')
+                    echo "Selected components for deployment: ${selectedComponents.join(', ')}"
+                }
+            }
+        }
+
+        stage('Deploy Components') {
+            steps {
+                script {
+                    def selectedComponents = params.COMPONENTS.split(',')
+                    for (component in selectedComponents) {
+                        echo "Deploying ${component.trim()}..."
+                        // Add deployment logic here
+                        // For example: sh "./deploy.sh ${component.trim()}"
+                    }
+                }
+            }
+        }
+    }
+}
