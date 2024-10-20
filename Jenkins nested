@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+                // Your build steps here
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+                // Your test steps here
+            }
+        }
+        
+        stage('Deploy') {
+            when {
+                allOf {
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                }
+            }
+            stages {
+                stage('Deploy to Staging') {
+                    steps {
+                        echo 'Deploying to Staging...'
+                        // Your staging deployment steps here
+                    }
+                }
+                
+                stage('Deploy to Production') {
+                    when {
+                        allOf {
+                            expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                        }
+                    }
+                    steps {
+                        echo 'Deploying to Production...'
+                        // Your production deployment steps here
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Cleaning up...'
+            // Cleanup steps here
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}
