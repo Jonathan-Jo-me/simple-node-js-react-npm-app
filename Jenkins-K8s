@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = 'jonathan02/simple-node-js-react-npm-app'  // Adjust this to match your repo
+        IMAGE_TAG = "${DOCKER_REGISTRY}:${env.BUILD_NUMBER}"  // Full image name with build number
+        AWS_REGION = 'ap-south-1'
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                // Remove the node_modules directory to avoid conflicts
+                sh 'rm -rf node_modules'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo "Test Stage"
+                sh "whoami"
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-credential', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    sh 'echo ${PASSWORD} | docker login -u ${USERNAME} --password-stdin'
+                }
+                echo 'Login successfully'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t ${IMAGE_TAG} .'
+                echo "Docker image built successfully"
+                sh "docker images"
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh 'docker push ${IMAGE_TAG}'
+                echo "Docker image pushed successfully"
+            }
+        }
+
+        stage('Deploy to EKS Cluster') {
+            steps {
+                withCredentials([aws(credentialsId: 'aws-credentials', region: AWS_REGION)]) {
+                // sh "sed -i 's#TAG/${IMAGE_TAG}#g' deployment.yaml"
+                sh " aws s3 ls "
+                sh 'aws eks update-kubeconfig --name my-cluster --region ap-south-1'
+                sh 'kubectl get nodes'
+                sh " kubectl apply -f deployment.yaml "
+                sh " kubectl get deployment -n dev "
+                }
+                echo "Deployed to EKS Cluster"
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                def bannerColor = (pipelineStatus == 'SUCCESS') ? 'green' : 'red'
+
+                def body = """<html>
+                                <body>
+                                    <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                                        <h2>${jobName} - Build ${buildNumber}</h2>
+                                        <div style="background-color: ${bannerColor}; padding: 10px;">
+                                            <h3 style="color: white;">Pipeline Status: ${pipelineStatus.toUpperCase()}</h3>
+                                        </div>
+                                        <p>Check the <a href="${env.BUILD_URL}">console output</a>.</p>
+                                    </div>
+                                </body>
+                              </html>"""
+                emailext (
+                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus.toUpperCase()}",
+                    body: body,
+                    to: 'jonathanjonathanjo10@gmail.com',
+                    from: 'jonathanjonathanjo10@gmail.com',
+                    replyTo: 'jonathanjonathanjo10@gmail.com',
+                    mimeType: 'text/html'
+                )
+            }
+        }
+    }
+}
