@@ -38,7 +38,7 @@ pipeline {
             steps {
                 echo "Deploying to EKS Cluster"
                 withCredentials([aws(credentialsId: 'aws-credentials', region: AWS_REGION)]) {
-                    sh 'aws eks update-kubeconfig --name my-cluster --region ap-south-1'
+                    sh 'aws eks update-kubeconfig --name my-eks-CqtrLBou --region ap-south-1'
                     sh 'kubectl get nodes'
                     sh "sed -i 's#TAG#${IMAGE_TAG}#g' deployment.yaml"  // Replace TAG in deployment.yaml with the actual image tag
                     sh 'kubectl apply -f deployment.yaml'
