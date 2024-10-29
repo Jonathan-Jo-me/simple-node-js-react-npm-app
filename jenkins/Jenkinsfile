@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'simple-node-js-react-npm-app'
-        DOCKER_REGISTRY = 'jonathan02'
-        IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'jonathan02' // Your Docker Hub username
+        IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}" // Generates a tag like jonathan02/simple-node-js-react-npm-app:1
     }
 
     stages {
@@ -16,7 +16,7 @@ pipeline {
 
         stage('Build') { 
             steps {
-                sh 'npm install'
+                sh 'npm install' 
             }
         }
 
@@ -30,6 +30,7 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-credential', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    // Securely logging into Docker Hub
                     sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
                 }
                 echo 'Successfully logged into Docker Hub'
@@ -38,6 +39,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+                // Build the Docker image
                 sh 'docker build -t $IMAGE_TAG -f jenkins/Dockerfile .'
                 echo "Docker image built successfully"
                 sh 'docker images'
@@ -55,44 +57,20 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
+                // Push the Docker image to the registry
                 sh 'docker push $IMAGE_TAG'
                 echo "Docker image pushed successfully"
             }
         }
     }
-/*
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonar-server') { // Uses the configured SonarQube server
-                    withCredentials([string(credentialsId: 'Sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            sonar-scanner \
-                            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-                            -Dsonar.sources=. \
-                            -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('OWASP ZAP Scan') {
-            steps {
-                echo "Running OWASP ZAP scan"
-                sh '''
-                    docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:8080 -g gen.conf -r zap_report.html
-                '''
-                archiveArtifacts artifacts: 'zap_report.html', allowEmptyArchive: true
-            }
-        }
-*/
 
     post {
         always {
             script {
+                currentBuild.result = currentBuild.result ?: 'SUCCESS' // Default to SUCCESS if no failures occurred
                 def jobName = env.JOB_NAME
                 def buildNumber = env.BUILD_NUMBER
-                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                def pipelineStatus = currentBuild.result
                 def bannerColor = (pipelineStatus == 'SUCCESS') ? 'green' : 'red'
 
                 def body = """<html>
@@ -117,3 +95,4 @@ pipeline {
             }
         }
     }
+}
