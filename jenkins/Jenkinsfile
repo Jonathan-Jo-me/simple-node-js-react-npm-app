@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = 'simple-node-js-react-npm-app'
         DOCKER_REGISTRY = 'jonathan02'  // Your Docker Hub username
         IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}" // Generates a tag like jonathan02/simple-node-js-react-npm-app:1
-        #SONAR_PROJECT_KEY = 'simple-nodejs-app' // Update this with your actual SonarQube project key
+       // SONAR_PROJECT_KEY = 'simple-nodejs-app' // Update this with your actual SonarQube project key
     }
 
     stages {
