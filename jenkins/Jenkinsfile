@@ -3,9 +3,8 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'simple-node-js-react-npm-app'
-        DOCKER_REGISTRY = 'jonathan02'  // Your Docker Hub username
-        IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}" // Generates a tag like jonathan02/simple-node-js-react-npm-app:1
-       // SONAR_PROJECT_KEY = 'simple-nodejs-app' // Update this with your actual SonarQube project key
+        DOCKER_REGISTRY = 'jonathan02'
+        IMAGE_TAG = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -17,7 +16,7 @@ pipeline {
 
         stage('Build') { 
             steps {
-                sh 'npm install' 
+                sh 'npm install'
             }
         }
 
@@ -31,7 +30,6 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-credential', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    // Securely logging into Docker Hub
                     sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
                 }
                 echo 'Successfully logged into Docker Hub'
@@ -40,7 +38,6 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Build the Docker image
                 sh 'docker build -t $IMAGE_TAG -f jenkins/Dockerfile .'
                 echo "Docker image built successfully"
                 sh 'docker images'
@@ -51,9 +48,18 @@ pipeline {
             steps {
                 echo "Running Trivy scan on the Docker image"
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    sh "trivy image --no-progress --exit-code 1 --severity MEDIUM,HIGH,CRITICAL --format table ${IMAGE_NAME}"
+                    sh "trivy image --no-progress --exit-code 1 --severity MEDIUM,HIGH,CRITICAL --format table $IMAGE_TAG"
+                }
             }
         }
+
+        stage('Push Docker Image') {
+            steps {
+                sh 'docker push $IMAGE_TAG'
+                echo "Docker image pushed successfully"
+            }
+        }
+    }
 /*
         stage('SonarQube Analysis') {
             steps {
@@ -80,14 +86,6 @@ pipeline {
             }
         }
 */
-        stage('Push Docker Image') {
-            steps {
-                // Push the Docker image to the registry
-                sh 'docker push $IMAGE_TAG'
-                echo "Docker image pushed successfully"
-            }
-        }
-    }
 
     post {
         always {
