@@ -1,22 +1,34 @@
-# Use the official Node.js image as the base image
-FROM node:lts
+# Stage 1: Build the application
+FROM node:18 AS build
 
-# Create and set the application directory
-WORKDIR /app
+# Set the working directory to /opt
+WORKDIR /opt
 
-# Copy the package.json and package-lock.json files
+# Copy package.json and package-lock.json first to leverage Docker cache
 COPY package*.json ./
 
-# Install the dependencies
+# Install dependencies
 RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the React application (if applicable)
+# Build the application (optional, if using a build step)
 RUN npm run build
 
-# Expose the port the app runs on
+# Stage 2: Create a smaller image for the runtime
+FROM node:18-slim
+
+# Set the working directory to /opt
+WORKDIR /opt
+
+# Copy only the necessary files from the build stage
+COPY --from=build /opt ./
+
+# Install only production dependencies
+RUN npm install --only=production
+
+# Expose the port that the app runs on
 EXPOSE 3000
 
 # Start the application
