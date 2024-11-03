@@ -4,7 +4,7 @@ pipeline {
         AWS_REGION = 'ap-south-1'                            // Set to your AWS region
         ECR_REGISTRY = '836759839628.dkr.ecr.ap-south-1.amazonaws.com'
         ECR_REPOSITORY = 'jenkins/dockerimage'               // Specify the full ECR repository path
-        IMAGE_TAG = "latest"                                 // Set your image tag, e.g., latest
+        IMAGE_TAG = "1"                                 // Set your image tag, e.g., latest
     }
     stages {
         stage('Code Checkout') {
