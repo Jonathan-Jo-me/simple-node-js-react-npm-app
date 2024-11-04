@@ -1,0 +1,41 @@
+post {
+    always {
+        script {
+            def jobName = env.JOB_NAME
+            def buildNumber = env.BUILD_NUMBER
+            def buildUrl = env.BUILD_URL
+            def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+            def bannerColor = (pipelineStatus == 'SUCCESS') ? 'green' : 'red'
+            
+            // Retrieve commit ID and trigger cause
+            def commitId = env.GIT_COMMIT ?: 'N/A'
+            def triggeredBy = currentBuild.getCauses()[0]?.userId ?: 'Automated Trigger'
+
+            // Construct email body
+            def body = """<html>
+                            <body>
+                                <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                                    <h2>${jobName} - Build ${buildNumber}</h2>
+                                    <div style="background-color: ${bannerColor}; padding: 10px;">
+                                        <h3 style="color: white;">Pipeline Status: ${pipelineStatus.toUpperCase()}</h3>
+                                    </div>
+                                    <p><strong>Build URL:</strong> <a href="${buildUrl}">${buildUrl}</a></p>
+                                    <p><strong>Commit ID:</strong> ${commitId}</p>
+                                    <p><strong>Triggered By:</strong> ${triggeredBy}</p>
+                                </div>
+                            </body>
+                          </html>"""
+
+            // Send email with attachments
+            emailext (
+                subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus.toUpperCase()}",
+                body: body,
+                to: 'jonathanjonathanjo10@gmail.com',
+                from: 'jonathanjonathanjo10@gmail.com',
+                replyTo: 'jonathanjonathanjo10@gmail.com',
+                mimeType: 'text/html',
+                attachmentsPattern: '**/trivy-report.html, **/hadolint-report.html, **/zap-report.html'
+            )
+        }
+    }
+}
