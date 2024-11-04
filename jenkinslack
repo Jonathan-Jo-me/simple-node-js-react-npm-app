@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo "Building the project..."
+                
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo "Running tests..."
+            
+            }
+        }
+    }
+
+    post {
+        success {
+            slackNotify("SUCCESS")
+        }
+        failure {
+            slackNotify("FAILURE")
+        }
+        unstable {
+            slackNotify("UNSTABLE")
+        }
+    }
+}
+
+// Function to send Slack notifications
+def slackNotify(String status) {
+    // Retrieve the name of the user who triggered the build
+    def triggerAuthor = currentBuild.changeSets.collectMany { changeSet ->
+        changeSet.items.collect { it.author.fullName }
+    }.join(', ') ?: "Unknown"
+
+    slackSend (
+        // No need to set channel or tokenCredentialId; uses global settings
+        color: (status == "SUCCESS") ? "good" : ((status == "FAILURE") ? "danger" : "warning"),
+        message: "*Build Status:* ${status}\n" +
+                 "*Build Number:* ${env.BUILD_NUMBER}\n" +
+                 "*Build Link:* <${env.BUILD_URL}|Click Here>\n" +
+                 "*Triggered By:* ${triggerAuthor}"
+    )
+}
