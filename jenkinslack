@@ -35,7 +35,7 @@ def slackNotify(String status) {
     // Retrieve the name of the user who triggered the build
     def triggerAuthor = currentBuild.changeSets.collectMany { changeSet ->
         changeSet.items.collect { it.author.fullName }
-    }.join(', ') ?: "Unknown"
+    }.join(', ') ?: "Jonathan"
 
     slackSend (
         // No need to set channel or tokenCredentialId; uses global settings
