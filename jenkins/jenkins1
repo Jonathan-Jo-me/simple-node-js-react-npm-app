@@ -4,7 +4,7 @@ pipeline {
         AWS_REGION = 'ap-south-1'                            // Set to your AWS region
         ECR_REGISTRY = '836759839628.dkr.ecr.ap-south-1.amazonaws.com'
         ECR_REPOSITORY = 'jenkins/dockerimage'               // Specify the full ECR repository path
-        IMAGE_TAG = "latest"                                 // Set your image tag, e.g., latest
+        IMAGE_TAG = "${ECR_REGISTRY}/${ECR_REPOSITORY}:${env.BUILD_NUMBER}"                                 // Set your image tag, e.g., latest
     }
     stages {
         stage('Code Checkout') {
@@ -15,7 +15,7 @@ pipeline {
         }
         stage('Login to ECR') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                  withCredentials([aws(credentialsId: 'aws-credentials', region: AWS_REGION)]) {
                     script {
                         // Log in to Amazon ECR
                         sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY"
@@ -27,15 +27,7 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image using the Dockerfile
-                    sh "docker build -t $ECR_REPOSITORY:$IMAGE_TAG ."
-                }
-            }
-        }
-        stage('Tag Docker Image') {
-            steps {
-                script {
-                    // Tag the Docker image for ECR
-                    sh "docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                    sh "docker build -t $IMAGE_TAG ."
                 }
             }
         }
@@ -43,7 +35,7 @@ pipeline {
             steps {
                 script {
                     // Push the tagged image to Amazon ECR
-                    sh "docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                    sh "docker push $IMAGE_TAG"
                 }
             }
         }
